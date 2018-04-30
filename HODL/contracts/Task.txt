@@ -1,0 +1,11 @@
+Each `block` should be a non-fungible ERC721 token with the following attributes:
+
+blockID - unique sequential id of the generated block
+blockLevel [1-4] to show what size of house to show
+generationDate - datetime when the block was created
+currentOwner - assigned user id who currently owns the block
+previousOwner - id (or 0 if none/not previously purchased)
+purchaseDate - datetime of last purchase
+gridPlacement - id (where on xy numbers for block location coordinates on XY grid e.g. 64,25
+superBlockID - 0 by default, but unique id for later game development use
+canBuy - 0 = unable to be purchased, 1 = able to be purchased
