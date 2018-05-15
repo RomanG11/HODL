@@ -65,7 +65,7 @@ contract TokenContract is Ownable{
 
   struct TokenStandard {
     // uint blockID; //autoincrement
-    uint8 blockLevel; // =1 when generated
+    uint8 blockLevel; // 0 when generated, 1 when TokenBought
     uint generationDate;
     address currentOwner;
     address previousOwner;
@@ -81,6 +81,11 @@ contract TokenContract is Ownable{
     uint8 x;
     uint8 y; 
   }
+
+  mapping (uint16 => TokenStandard) tokens;
+  
+
+
 
   uint8 public constant maxCoordinate = 100;
   //100x100 maybe, IDK
@@ -171,21 +176,21 @@ contract TokenContract is Ownable{
     }
   }
   
-  function createNewToken (uint _random) public {
+  function createNewToken (uint8 x, uint8 y) public {
     TokenStandard memory buffer;
     buffer.blockLevel = 1;
     buffer.generationDate = now;
     buffer.currentOwner = owner;
     // buffer.blockStyle = 0;
     
-    place = getPlaceForNewToken(_random);
+    place = Placement(x,y);
     
     // Placement storage plase = 
 
     buffer.gridPlacement = place;
     buffer.superBlockID = true;
 
-    _changeAvailablePlaces(place.x,place.y);
+    // _changeAvailablePlaces(place.x,place.y);
 
     tokens.push(buffer);
 
