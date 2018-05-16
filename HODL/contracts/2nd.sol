@@ -123,6 +123,7 @@ contract TokenContract is Ownable{
   event OnChangeSaleToken(uint indexed tokenID, uint indexed price, bool canBuy);
   event TokenBought(address indexed from, address indexed to, uint indexed etherValue, uint tokenID);
   event OnTokenUpdate(uint16 indexed _tokenID, uint8 indexed newLevel, uint8 newStyle);
+  event OnChangeSuperBlockId(uint16 tokenID);
 
   // function createNewToken (uint16 _tokenID, uint8 _x, uint8 _y, uint32 _generationDate, address _newOwner, uint8 _tokenLevel, uint8 _tokenStyle) public onlyOwner {
   //   require (tokensMap[_tokenID].tokenLevel == 0);
@@ -154,28 +155,30 @@ contract TokenContract is Ownable{
   }
 
   function buyToken (uint16 _tokenID ) public payable {
+    if (createdTokens[_tokenID]){
+      _buyToken(_tokenID, msg.value);
+    }else{
+      _buyTokenFromOwner(_tokenID, msg.value);
+    }
+  }
+
+  function _buyToken (uint16 _tokenID, uint _value)  internal {
     require (tokensMap[_tokenID].canBuy);
 
-    uint etherForTake = 0;
-
-    // if(_newLvl > tokensMap[_tokenID].tokenLevel){
-    //     etherForTake = (_newLvl - tokensMap[_tokenID].tokenLevel)* ethForEachLevel;
-    //     _setNewLevel(_tokenID, _newLvl, _tokenStyle, etherForTake);
-    // }
-    
-    require (msg.value >= tokensMap[_tokenID].sellingPrice.add(etherForTake));
+    require (_value >= tokensMap[_tokenID].sellingPrice);
 
     tokensMap[_tokenID].lastPurchaseDate = uint32(now);
 
     tokensMap[_tokenID].currentOwner.transfer(tokensMap[_tokenID].sellingPrice);
-    msg.sender.transfer(msg.value.sub(tokensMap[_tokenID].sellingPrice.add(etherForTake)));
+    msg.sender.transfer(_value.sub(tokensMap[_tokenID].sellingPrice));
 
     tokensMap[_tokenID].previousOwner = tokensMap[_tokenID].currentOwner;
 
     tokensMap[_tokenID].canBuy = false;
 
-    emit TokenBought(tokensMap[_tokenID].previousOwner, msg.sender, msg.value, _tokenID);
+    emit TokenBought(tokensMap[_tokenID].previousOwner, msg.sender, tokensMap[_tokenID].sellingPrice, _tokenID);
   }
+  
   
   uint public ethForSecondLevel = 1 ether;
   uint public ethForThirdLevel = 2 ether;
@@ -184,6 +187,7 @@ contract TokenContract is Ownable{
 
 
   function setNewLevel (uint16 _tokenID, uint8 _newLvl, uint8 _tokenStyle) public payable {
+    require (msg.sender == tokensMap[_tokenID].currentOwner);
     require (_setNewLevel(_tokenID, _newLvl, _tokenStyle, msg.value));
   }
 
@@ -239,10 +243,10 @@ contract TokenContract is Ownable{
     return uint32(creationTimestamp + (id-999 * 900));
   }
 
-  function buyTokenFromOwner (uint16 _tokenID) external payable {
+  function _buyTokenFromOwner (uint16 _tokenID, uint _amount) internal {
     require (isTokenCreated(_tokenID) && !createdTokens[_tokenID]);
     
-    uint rest = msg.value.sub(newTokenPrice);
+    uint rest = _amount.sub(newTokenPrice);
     if (rest > 0){
       msg.sender.transfer(rest);
     }
@@ -255,12 +259,13 @@ contract TokenContract is Ownable{
     emit OnFirstTokenBought(_tokenID, msg.sender);
   }
 
-  mapping (uint16 => bool) createdTokens;
+  mapping (uint16 => bool) public createdTokens;
   
 
   function changeSuperBlockId (uint16 index) public onlyOwner {
     require(!tokensMap[index].superBlockID);
     tokensMap[index].superBlockID = true;
+    emit OnChangeSuperBlockId(index);
   }
   
 }
